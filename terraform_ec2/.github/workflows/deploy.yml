@@ -1,6 +1,12 @@
 name: Deploy EC2 with Terraform
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       environment:
