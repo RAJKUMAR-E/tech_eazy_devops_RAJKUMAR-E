@@ -42,3 +42,20 @@ jobs:
       run: |
         chmod +x deploy.sh scripts/create_keypair.sh
         ./deploy.sh dev
+
+    - name: 🧾 Get Terraform output
+      id: tf_output
+      run: |
+        INSTANCE_ID=$(terraform output -raw instance_id)
+        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+        AVAILABILITY_ZONE=$(terraform output -raw availability_zone)
+        echo "AVAILABILITY_ZONE=$AVAILABILITY_ZONE" >> $GITHUB_ENV
+
+    - name: Send SSH public key to EC2 instance
+      run: | 
+          aws ec2-instance-connect send-ssh-public-key \ 
+          --instance-id $INSTANCE_ID \ 
+          --availability-zone $AVAILABILITY_ZONE \ 
+          --instance-os-user ec2-user \ 
+          --ssh-public-key file://temp_key.pub
+
