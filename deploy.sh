@@ -16,6 +16,8 @@ bash scripts/create_keypair.sh "$TF_VAR_key_name" "$TF_VAR_aws_region"
 cd terraform
 terraform init
 cd ..
+set -a
 source ./environments/dev.env
+set +a
 cd terraform
 terraform apply -auto-approve
