@@ -47,6 +47,13 @@ jobs:
       run: |
         terraform output -json | jq -r 'to_entries[] | "\(.key)=\(.value.value)"' > terraform-outputs.env
 
+    - name: Export specific Terraform outputs to GitHub environment
+      run: |
+        terraform output -json | jq -r '
+          to_entries | map(select(.key | IN("availability_zone", "instance_id", "public_ip"))) |
+          .[] | "\(.key | ascii_upcase)=\(.value.value)"
+        ' >> $GITHUB_ENV
+
     - name: Send SSH public key to EC2 instance
       run: | 
           aws ec2-instance-connect send-ssh-public-key \ 
