@@ -21,3 +21,4 @@ source ./environments/dev.env
 set +a
 cd terraform
 terraform apply -auto-approve
+terraform output
