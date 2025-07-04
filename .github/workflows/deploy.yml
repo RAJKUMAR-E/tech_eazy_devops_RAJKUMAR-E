@@ -59,7 +59,7 @@ jobs:
           --instance-id "$INSTANCE_ID" \
           --availability-zone "$AVAILABILITY_ZONE" \
           --instance-os-user ec2-user \
-          --ssh-public-key file://temp_key.pub
+          --ssh-public-key "$SSH_PUBLIC_KEY"
       env:
         AWS_REGION: ap-south-1
         AWS_DEFAULT_REGION: ap-south-1
