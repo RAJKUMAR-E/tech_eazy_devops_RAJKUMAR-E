@@ -43,17 +43,13 @@ jobs:
         chmod +x deploy.sh scripts/create_keypair.sh
         ./deploy.sh dev
 
-    - name: Export Terraform Outputs as Key=Value Pairs
+    - name: Export selected Terraform outputs to GitHub env
       working-directory: terraform
       run: |
-        terraform output -json | jq -r 'to_entries[] | "\(.key)=\(.value.value)"' > terraform-outputs.env
-
-    - name: Export specific Terraform outputs to GitHub environment
-      run: |
-        terraform output -json | jq -r '
-          to_entries | map(select(.key | IN("availability_zone", "instance_id", "public_ip"))) |
-          .[] | "\(.key | ascii_upcase)=\(.value.value)"
-        ' >> $GITHUB_ENV
+        for key in availability_zone instance_id public_ip; do
+          value=$(terraform output -raw $key 2>/dev/null || echo "")
+          if [ -n "$value" ]; then echo "${key^^}=$value" >> $GITHUB_ENV; fi
+        done
 
     - name: Send SSH public key to EC2 instance
       run: | 
