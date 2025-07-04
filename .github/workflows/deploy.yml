@@ -50,3 +50,18 @@ jobs:
           value=$(terraform output -raw $key 2>/dev/null || echo "")
           if [ -n "$value" ]; then echo "${key^^}=$value" >> $GITHUB_ENV; fi
         done
+        
+    - name: Send SSH public key using GitHub environment variables
+      run: |
+        echo "Connecting to EC2 instance: $INSTANCE_ID in $AVAILABILITY_ZONE"
+    
+        aws ec2-instance-connect send-ssh-public-key \
+          --instance-id "$INSTANCE_ID" \
+          --availability-zone "$AVAILABILITY_ZONE" \
+          --instance-os-user ec2-user \
+          --ssh-public-key file://temp_key.pub
+      env:
+        AWS_REGION: ap-south-1
+        AWS_DEFAULT_REGION: ap-south-1
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
