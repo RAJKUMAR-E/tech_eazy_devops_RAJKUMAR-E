@@ -51,6 +51,13 @@ jobs:
           if [ -n "$value" ]; then echo "${key^^}=$value" >> $GITHUB_ENV; fi
         done
         
+    - name: Generate temporary SSH key
+      run: ssh-keygen -t rsa -b 2048 -f temp_key -N ""
+
+    - name: Save SSH public key to GitHub environment
+      run: |
+        echo "SSH_PUBLIC_KEY=$(cat temp_key.pub)" >> $GITHUB_ENV
+
     - name: Send SSH public key using GitHub environment variables
       run: |
         echo "Connecting to EC2 instance: $INSTANCE_ID in $AVAILABILITY_ZONE"
