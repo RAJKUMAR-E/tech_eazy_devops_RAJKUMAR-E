@@ -45,6 +45,7 @@ jobs:
 
     - name: Export Terraform Outputs as Key=Value Pairs
       run: |
+      working-directory: terraform
         terraform output -json | jq -r 'to_entries[] | "\(.key)=\(.value.value)"' > terraform-outputs.env
 
     - name: Export specific Terraform outputs to GitHub environment
