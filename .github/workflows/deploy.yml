@@ -43,19 +43,32 @@ jobs:
         chmod +x deploy.sh scripts/create_keypair.sh
         ./deploy.sh dev
 
-    - name: 🧾 Get Terraform output
-      id: tf_output
+    - name: Export selected Terraform outputs to GitHub env
+      working-directory: terraform
       run: |
-        INSTANCE_ID=$(terraform output -raw instance_id)
-        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
-        AVAILABILITY_ZONE=$(terraform output -raw availability_zone)
-        echo "AVAILABILITY_ZONE=$AVAILABILITY_ZONE" >> $GITHUB_ENV
+        for key in availability_zone instance_id public_ip; do
+          value=$(terraform output -raw $key 2>/dev/null || echo "")
+          if [ -n "$value" ]; then echo "${key^^}=$value" >> $GITHUB_ENV; fi
+        done
+        
+    - name: Generate temporary SSH key
+      run: ssh-keygen -t rsa -b 2048 -f temp_key -N ""
 
-    - name: Send SSH public key to EC2 instance
-      run: | 
-          aws ec2-instance-connect send-ssh-public-key \ 
-          --instance-id $INSTANCE_ID \ 
-          --availability-zone $AVAILABILITY_ZONE \ 
-          --instance-os-user ec2-user \ 
-          --ssh-public-key file://temp_key.pub
+    - name: Save SSH public key to GitHub environment
+      run: |
+        echo "SSH_PUBLIC_KEY=$(cat temp_key.pub)" >> $GITHUB_ENV
 
+    - name: Send SSH public key using GitHub environment variables
+      run: |
+        echo "Connecting to EC2 instance: $INSTANCE_ID in $AVAILABILITY_ZONE"
+    
+        aws ec2-instance-connect send-ssh-public-key \
+          --instance-id "$INSTANCE_ID" \
+          --availability-zone "$AVAILABILITY_ZONE" \
+          --instance-os-user ec2-user \
+          --ssh-public-key "$SSH_PUBLIC_KEY"
+      env:
+        AWS_REGION: ap-south-1
+        AWS_DEFAULT_REGION: ap-south-1
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
